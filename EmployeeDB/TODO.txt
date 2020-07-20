@@ -1,0 +1,2 @@
+1) Improve the highlighted section CSS for the top nav bar
+2) 

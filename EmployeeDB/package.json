@@ -1,0 +1,20 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "dependencies": {
+    "express": "4.17.1",
+    "pug": "*",
+    "stylus": "*",
+    "mongodb": ">= 0.9.6-7",
+    "jasmine": "^2.4.1",
+    "mocha": "^2.3.4",
+    "serve-favicon": "^2.5.0",
+    "morgan": "^1.9.1",
+    "method-override": "3.0.0",
+    "errorhandler": "1.5.1"
+  }
+}
