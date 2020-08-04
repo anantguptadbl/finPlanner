@@ -3,6 +3,7 @@ append styles
 	// Custom styles for this template
 	link(href='/stylesheets/dashboard.css', rel='stylesheet')
 	script(src='https://d3js.org/d3.v4.js')
+	script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js")
 block body  
 	nav.navbar.navbar-inverse.navbar-fixed-top
 		.container-fluid
@@ -77,61 +78,20 @@ block body
 						h2.sub-header PF Calculator
 						p We will be calculating the PF amount
 
-						p CurrentDate
-						input(type="text" name="date" placeholder="")
+						p CurrentAge
+						input(type="text" id="PFCurrentAge" placeholder="")
+						p RetiringAge
+						input(type="text" id="PFRetiringAge" placeholder="")
 						p Current PF Balance
-						input(type="text" name="currentBalance" placeholder="")
+						input(type="text" id="PFCurrentBalance" placeholder="")
 						p Monthly PF Deposits
-						input(type="text" name="currentBalance" placeholder="")
-
+						input(type="text" id="PFMonthlyDeposit" placeholder="")
+						p
+						button(onclick='getPPFData()') Submit
 						div#chart1
-							script(type="text/javascript").
-								var margin = {top: 10, right: 30, bottom: 30, left: 60},
-									width = 460 - margin.left - margin.right,
-									height = 400 - margin.top - margin.bottom;
-
-								var svg = d3.select("#chart1")
-								.append("svg")
-									.attr("width", width + margin.left + margin.right)
-									.attr("height", height + margin.top + margin.bottom)
-								.append("g")
-									.attr("transform",
-										"translate(" + margin.left + "," + margin.top + ")");
-
-								d3.csv("https://raw.githubusercontent.com/holtzy/data_to_viz/master/Example_dataset/3_TwoNumOrdered_comma.csv",
-
-								function(d){
-									return { date : d3.timeParse("%Y-%m-%d")(d.date), value : d.value }
-								},
-
-								function(data) {
-
-									var x = d3.scaleTime()
-									.domain(d3.extent(data, function(d) { return d.date; }))
-									.range([ 0, width ]);
-									svg.append("g")
-									.attr("transform", "translate(0," + height + ")")
-									.call(d3.axisBottom(x));
-
-									var y = d3.scaleLinear()
-									.domain([0, d3.max(data, function(d) { return +d.value; })])
-									.range([ height, 0 ]);
-									svg.append("g")
-									.call(d3.axisLeft(y));
-
-									svg.append("path")
-									.datum(data)
-									.attr("fill", "none")
-									.attr("stroke", "steelblue")
-									.attr("stroke-width", 1.5)
-									.attr("d", d3.line()
-										.x(function(d) { return x(d.date) })
-										.y(function(d) { return y(d.value) })
-										)
-								});
+							
 
 					div#loancalculator
 						h2.sub-header Loan Calculator
 						p We will be calculating the Loan Payouts, Pending, Interest
-				
-							
+	script(src='scripts/js/dashboard.js',type='text/javascript')

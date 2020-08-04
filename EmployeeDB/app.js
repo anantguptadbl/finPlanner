@@ -123,6 +123,14 @@ app.get('/contact', function(req, res){
   });
 });
 
+// Get PPF Data
+app.post('/getPFData', function(req, res){
+  var keys = Object.keys(req);
+  console.log("The PPF DATA INPUT ARGUMENTS IS " + keys);
+  console.log("The PPF DATA INPUT ARGUMENTS IS " + Object.keys(req['params']));
+  console.log("The PPF DATA INPUT ARGUMENTS IS " + Object.keys(req['query']));
+});
+
 //new employee
 app.get('/employee/new', function(req, res) {
     res.render('employee_new', {

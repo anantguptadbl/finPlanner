@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Drawing SVF using D3</title>
+  <script src="http://d3js.org/d3.v4.min.js" charset="utf-8"></script>
+</head>
+<body>
+  <h3> SVG Bar </h3>
+  <svg>
+    <rect width="50" height ="200" style="fill: blue"/>
+  </svg>
+  
+  <h3> D3 Bar </h3>
+  <script>
+	var w=500;
+	var h= 100;
+	var padding = 2;
+	var dataset=[5,10,15,20,25];
+	var labels=["a","b","c","d","e"];
+	var svg= d3.select("body")
+			.append("svg")
+			.attr("height",h)
+			.attr("width",w);
+
+	svg.selectAll("rect")
+		.data(dataset)
+		.enter()
+		.append("rect")
+		.attr("x",function(d,i){return i*41;})
+		.attr("y",0)
+		.attr("width",40)
+		.attr("height",function(d,i) {return d;})
+		.attr("fill",function(d){ return "rgb(0," + (d*10)+",0)"});
+
+	
+	svg.selectAll("text")
+		.data(labels)
+		.enter()		
+		.append("text")
+		.text(function(d) {return d;})
+		.attr("text-anchor","middle")
+		.attr("x",function(d,i) { return 20 + (i*41);})
+		.attr("y",function(d,i) { return dataset[i]+20;})
+		.attr("font-family","sans-serif")
+		.attr("font-size",12)
+		.attr("fill","#000000")
+
+	var xScale = d3.scaleLinear()
+				.domain([0,dataset.length])
+				.range([0,w])
+	var yScale = d3.scaleLinear()
+				.domain([
+					d3.min(dataset,function(d){return d;}),
+					d3.max(dataset,function(d){return d;})
+				])
+				.range([0,h])
+
+
+	var lineFun = d3.line()
+	.x(function(d,i) { return xScale(i);})
+	.y(function(d) { return yScale(d);});
+
+	var svg= d3.select("body").append("svg").attr("width",w).attr("height",h);
+	var viz=svg.append("path")
+	.attr("d",lineFun(dataset))
+	.attr("stroke","purple")
+	.attr("stroke-width",2)
+	.attr("fill","none")
+
+	var dots=svg.selectAll("circle").data(dataset)
+	.enter()
+	.append("circle")
+	.attr("cx", function(d,i) {return xScale(i);})
+	.attr("cy",function(d,i){return yScale(d);})
+	.attr("r",4)
+	.attr("fill", function(d){colorCoding(d)})
+	.attr("class","ds-category")
+	.on("mouseover", function(d)
+	{
+		svg.append("text")
+	.text(d)
+	.attr({
+		"text-anchor":"middle",
+		x : parseFloat(d3.select(this).attr("x")) + parseFloat(d3.select(this).attr("width")/2),
+		y : parseFloat(d3.select(this).attr("y"))+12,
+		"font-family":"sans-serif",
+		"font-weight":12,
+		"fill":"#ffffff",
+		id:"tooltip"
+	})
+
+	})
+	.on("mouseout",function(d)
+	{
+		d3.select("#tooltip").remove();
+	});
+
+	var labelLine=svg.selectAll("text").data(dataset)
+	.enter()
+	.append("text")
+	.text(function(d,i){return labels[i];})
+	.attr("x", function(d,i) {return xScale(i)+4;})
+	.attr("y",function(d,i){return yScale(d)+15;})
+	.attr("font-family","sans-serif")
+	.attr("font-size",12)
+	.attr("fill","#000000");
+
+	
+
+	var svg= d3.select("body").append("svg").attr("width",w).attr("height",h);
+	function colorCoding(d)
+	{
+		if(d<10) { return "#33CC66";} else
+		if(d>=10) { return "#666666";}
+	};
+
+	function showMinMax(d,dataset)
+	{
+		if(d===dataset.max) { return "MAX";}
+		else if(d===dataset.min) { return "MIN";}
+		else {return d;}
+	};
+
+	var labelLine=svg.selectAll("circle").data(dataset)
+	.enter()
+	.append("circle")
+	.attr("cx", function(d,i) {return d*4;})
+	.attr("cy",function(d,i){return (d*4)+15;})
+	.attr("r",5)
+	.attr("fill", function(d){colorCoding(d)});
+
+	var labelScatter=svg.selectAll("text").data(dataset)
+	.enter()
+	.append("text")
+	.text(function(d,i){return showMinMax(d,dataset);})
+	.attr("x", function(d,i) {return d*4;})
+	.attr("y",function(d,i){return (d*4)+15;})
+	.attr("font-family","sans-serif")
+	.attr("font-size",12)
+	.attr("fill","#000000");
+	
+	var ds;
+	d3.csv("http://localhost:8000/MFData.csv",function(error,data)
+	{
+		if(error){ console.log(error);}
+		else {console.log(data); ds=data;}
+	});
+	var salesTotal=0;
+	var t=d3.select("body").append("table");
+	for(var i=0;i < dataset.length;i++)
+	{
+		salesTotal+=dataset[i]*1;
+	}
+	var tr=t.selectAll("tr").data([1]).enter().append("tr").append("td")
+	.text("Total :" + salesTotal);
+
+/*
+	d3.json("https://github.com/bsullins/d3js-resources/blob/master/monthlySalesbyCategoryMultiple.json", function(error,data)
+	{
+		if(error) {		console.log(error); }
+		else {console.log(data);}
+		var decodeData=JSON.parse)
+		data.contents.forEach(function(ds)
+		{
+			console.log(ds);
+			buildLine(ds);
+		});
+	});
+*/
+  </script>
+</body>
+</html>

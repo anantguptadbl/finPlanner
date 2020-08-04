@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Load d3.js -->
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz"></div>
+
+<script>
+
+    // set the dimensions and margins of the graph
+    var margin = {top: 30, right: 30, bottom: 60, left: 60},
+        width = 1000 - margin.left - margin.right,
+        height = 500 - margin.top - margin.bottom;
+    
+    // append the svg object to the body of the page
+    var svg = d3.select("#my_dataviz")
+      .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform",
+              "translate(" + margin.left + "," + margin.top + ")");
+    
+    //Read the data
+      //Read the data
+      dataset=[
+        {x:1,y:0.03,date:"2020-01-01",CI_right:0.1},
+        {x:2,y:0.05,date:"2020-02-01",CI_right:0.2},
+        {x:3,y:0.5,date:"2020-03-01",CI_right:0.3},
+        {x:4,y:0.1,date:"2020-04-01",CI_right:0.4},
+        {x:5,y:0.9,date:"2020-05-01",CI_right:0.5},
+    ];
+
+      var data = dataset.map(function(e) { 
+        return { date : d3.timeParse("%Y-%m-%d")(e.date), value : e.y }
+        });
+    
+      // Now I can use this dataset:
+      //function(data) {
+    
+        // Add X axis --> it is a date format
+        var x = d3.scaleTime()
+          .domain(d3.extent(data, function(d) { return d.date; }))
+          .range([ 0, width-100 ]);
+        xAxis = svg.append("g")
+          .attr("class", "xaxis")
+          .attr("transform", "translate(0," + height + ")")
+          .call(d3.axisBottom(x))
+          .selectAll("text")
+          .style("text-anchor","end")
+          .attr("dx", "-.8em")
+          .attr("dy", ".15em")
+          .attr("transform","rotate(-90)");
+    
+        // Add Y axis
+        var y = d3.scaleLinear()
+          .domain([0, d3.max(data, function(d) { return +d.value; })])
+          .range([ height, 0 ]);
+        yAxis = svg.append("g")
+          .attr('class', 'y')
+          .call(d3.axisLeft(y));
+    
+        // Add a clipPath: everything out of this area won't be drawn.
+        var clip = svg.append("defs").append("svg:clipPath")
+            .attr("id", "clip")
+            .append("svg:rect")
+            .attr("width", width )
+            .attr("height", height )
+            .attr("x", 0)
+            .attr("y", 0);
+    
+        // Add brushing
+        var brush = d3.brushX()                   // Add the brush feature using the d3.brush function
+            .extent( [ [0,0], [width,height] ] )  // initialise the brush area: start at 0,0 and finishes at width,height: it means I select the whole graph area
+            .on("end", updateChart)               // Each time the brush selection changes, trigger the 'updateChart' function
+    
+        // Create the line variable: where both the line and the brush take place
+        var line = svg.append('g')
+          .attr("clip-path", "url(#clip)")
+    
+        // Add the line
+        line.append("path")
+          .datum(data)
+          .attr("class", "line")  // I add the class line to be able to modify this line later on.
+          .attr("fill", "none")
+          .attr("stroke", "steelblue")
+          .attr("stroke-width", 1.5)
+          .attr("d", d3.line()
+            .x(function(d) { return x(d.date) })
+            .y(function(d) { return y(d.value) })
+            )
+    
+        // Add the brushing
+        line
+          .append("g")
+            .attr("class", "brush")
+            .call(brush)
+            .on("mouseover",mouseover)
+            .on("mouseout",mouseout)
+            .on("mousemove",mousemove); ;
+        
+        // Add circles on data node elements
+        circle=svg
+        .append("g")
+        .attr("class","labelCircle");
+
+        circle.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("r", 4)
+        .attr("cx", function(d) {
+            return x(d.date)
+        })
+        .attr("cy", function(d) {
+            return y(d.value)
+        })
+        .attr("fill", "none")
+        .attr("stroke", "black");
+
+        // Add the text that holds the label string
+        svg
+        .append("g")
+        .selectAll("text")
+        .data(data)
+        .enter()
+        .append("text")
+        .style("opacity", 0)
+        .attr("class","nodeElementText")
+        .attr("x", function(d) {
+            return x(d.date) + 5
+        })
+        .attr("y", function(d) {
+            return y(d.value) + 5
+        })
+        .attr("fill", "red")
+        .text(function(d) {
+            return d.value
+        });
+
+        // Create the text that travels along the curve of chart
+        var focusText = svg
+        .append('g')
+        .append('text')
+        .style("opacity", 0)
+        .attr("text-anchor", "left")
+        .attr("alignment-baseline", "middle");
+        
+
+        // Helper Functions
+        // This allows to find the closest X index of the mouse:
+        var bisect = d3.bisector(function(d) { return d.date; }).left;
+
+        function mouseover() {
+            //focus.style("opacity", 1)
+            focusText.style("opacity",1)
+        }
+        
+        function mousemove() {
+            console.log("Entered mousemove function")
+            // recover coordinate we need
+            var x0 = x.invert(d3.mouse(this)[0]);
+            var i = bisect(data, x0, 1);
+            selectedData = data[i];
+            //focus
+            //    .attr("cx", x(selectedData.x))
+            //    .attr("cy", y(selectedData.y))
+            if(selectedData != undefined)
+            {
+                focusText
+                .html("Value : " + selectedData.value)
+                .attr("x", x(selectedData.date))
+                .attr("y", y(selectedData.value));
+            }
+        }
+        function mouseout() {
+            //focus.style("opacity", 0)
+            focusText.style("opacity", 0)
+        }
+
+            // A function that set idleTimeOut to null
+            var idleTimeout
+            function idled() { idleTimeout = null; }
+    
+        // A function that update the chart for given boundaries
+        function updateChart() 
+        {
+            // Removing certain elements
+            svg.selectAll("circle").remove();
+            svg.selectAll(".nodeElementText").remove();
+
+            // What are the selected boundaries?
+            extent = d3.event.selection
+            // If no selection, back to initial coordinate. Otherwise, update X axis domain
+            if(!extent){
+                if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
+                x.domain([ 4,8])
+            }else{
+                x.domain([ x.invert(extent[0]), x.invert(extent[1]) ])
+                line.select(".brush").call(brush.move, null) // This remove the grey brush area as soon as the selection has been done
+            }
+            // Update axis
+            svg.select(".xaxis")
+            .transition()
+            .duration(1000)
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .style("text-anchor","end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform","rotate(-90)")
+            ;
+            // Update Line
+            line
+            .select('.line')
+            .transition()
+            .duration(1000)
+            .attr("d", d3.line()
+            .x(function(d) { return x(d.date) })
+            .y(function(d) { return y(d.value) })
+            );
+            // Update the node element circles
+            svg.append("g").selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r", 4)
+            .attr("cx", function(d) {
+                return x(d.date)
+            })
+            .attr("cy", function(d) {
+                return y(d.value)
+            })
+            .attr("fill", "none")
+            .attr("stroke", "black");
+
+            // Add the text that holds the label string
+            /*
+            svg
+            .append("g")
+            .selectAll("text")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class","nodeElementText")
+            .attr("x", function(d) {
+                return x(d.date) + 5
+            })
+            .attr("y", function(d) {
+                return y(d.value) + 5
+            })
+            .attr("fill", "red")
+            .text(function(d) {
+                return d.value
+            });
+            */
+        }
+    
+        // If user double click, reinitialize the chart
+        svg.on("dblclick",function()
+        {
+            // Removing certain elements
+            svg.selectAll("circle").remove();
+            svg.selectAll(".nodeElementText").remove();
+
+            // Updating the scale Domain
+            x.domain(d3.extent(data, function(d) { return d.date; }));
+            // Updating the Axis
+            svg.select(".xaxis")
+            .transition()
+            .call(d3.axisBottom(x))
+            .selectAll("text")
+            .style("text-anchor","end")
+            .attr("dx", "-.8em")
+            .attr("dy", ".15em")
+            .attr("transform","rotate(-90)");
+            // Updating the line
+            line
+                .select('.line')
+                .transition()
+                .attr("d", d3.line()
+                .x(function(d) { return x(d.date) })
+                .y(function(d) { return y(d.value) })
+            );
+
+            // Update the node element circles
+            svg.append("g").selectAll("circle")
+            .data(data)
+            .enter()
+            .append("circle")
+            .attr("r", 4)
+            .attr("cx", function(d) {
+                return x(d.date)
+            })
+            .attr("cy", function(d) {
+                return y(d.value)
+            })
+            .attr("fill", "none")
+            .attr("stroke", "black");
+
+            // Add the text that holds the label string
+            /*
+            svg
+            .append("g")
+            .selectAll("text")
+            .data(data)
+            .enter()
+            .append("text")
+            .attr("class","nodeElementText")
+            .attr("x", function(d) {
+                return x(d.date) + 5
+            })
+            .attr("y", function(d) {
+                return y(d.value) + 5
+            })
+            .attr("fill", "red")
+            .text(function(d) {
+                return d.value
+            });
+            */
+        });
+    
+    //}
+    
+    </script>
