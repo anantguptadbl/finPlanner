@@ -9,6 +9,8 @@
 
 <script>
 
+    var globalExtent;
+    var finalGlobalExtent;
     // set the dimensions and margins of the graph
     var margin = {top: 30, right: 30, bottom: 60, left: 60},
         width = 1000 - margin.left - margin.right,
@@ -28,9 +30,9 @@
       dataset=[
         {x:1,y:0.03,date:"2020-01-01",CI_right:0.1},
         {x:2,y:0.05,date:"2020-02-01",CI_right:0.2},
-        {x:3,y:0.5,date:"2020-03-01",CI_right:0.3},
+        {x:3,y:21,date:"2020-03-01",CI_right:0.3},
         {x:4,y:0.1,date:"2020-04-01",CI_right:0.4},
-        {x:5,y:0.9,date:"2020-05-01",CI_right:0.5},
+        {x:5,y:100,date:"2020-05-01",CI_right:0.5},
     ];
 
       var data = dataset.map(function(e) { 
@@ -159,11 +161,27 @@
         }
         
         function mousemove() {
-            console.log("Entered mousemove function")
+            console.log("Entered mousemove function and d3.mouse(this) value is " + d3.mouse(this));
+            console.log("the extent is  " + globalExtent);
+            if(finalGlobalExtent===undefined){
+                finalGlobalExtent=globalExtent;
+            }
+            else{
+                finalGlobalExtent=[(globalExtent[0]/width),(globalExtent[1]/height)];
+            }
             // recover coordinate we need
-            var x0 = x.invert(d3.mouse(this)[0]);
+            curX=d3.mouse(this)[0];
+            if(finalGlobalExtent==undefined){
+                var x0 = x.invert(curX);    
+            }
+            else{
+                var x0 = x.invert(finalGlobalExtent[0]*curX);
+            }
+            
+            //console.log("curX:"+curX+" width:"+width+" finalGlobalExtent:"+finalGlobalExtent);
             var i = bisect(data, x0, 1);
             selectedData = data[i];
+            console.log("X0:"+x0+" i:"+i+" selectedData:"+selectedData);
             //focus
             //    .attr("cx", x(selectedData.x))
             //    .attr("cy", y(selectedData.y))
@@ -192,7 +210,13 @@
             svg.selectAll(".nodeElementText").remove();
 
             // What are the selected boundaries?
-            extent = d3.event.selection
+            if(d3.event.selection!==null)
+            {
+                globalExtent= d3.event.selection;
+                console.log("window.extent is "+ globalExtent);
+            }
+            
+            extent=d3.event.selection;
             // If no selection, back to initial coordinate. Otherwise, update X axis domain
             if(!extent){
                 if (!idleTimeout) return idleTimeout = setTimeout(idled, 350); // This allows to wait a little bit
@@ -261,6 +285,8 @@
         // If user double click, reinitialize the chart
         svg.on("dblclick",function()
         {
+            finalGlobalExtent=undefined;
+            globalExtent=undefined;
             // Removing certain elements
             svg.selectAll("circle").remove();
             svg.selectAll(".nodeElementText").remove();
